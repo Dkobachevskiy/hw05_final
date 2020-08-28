@@ -15,7 +15,7 @@
             
             {{ post.text|linebreaksbr }}
         </p>
-        <a class="btn btn-sm text-muted" href="/{{ author.get_username }}/{{ post.id }}" role="button">Пост номер: {{ post.id }}</a>
+        <a class="btn btn-sm text-muted" href="/{{ post.author.username }}/{{ post.id }}" role="button">Пост номер: {{ post.id }}</a>
         <!-- Если пост относится к какому-нибудь сообществу, то отобразим ссылку на него через # -->
         {% if post.group %}
         <a class="btn btn-sm text-muted" href="{% url 'group_posts' post.group.slug %}" role="button">Группа: {{ post.group.title }}</a>
