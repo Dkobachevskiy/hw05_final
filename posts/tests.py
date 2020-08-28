@@ -179,24 +179,24 @@ class TestStringMethods(TestCase):
         )
         self.client_fol.force_login(self.user_follow)
 
-        self.client_fol1 = Client()
-        self.user_follow1 = User.objects.create_user(
+        self.client_not_fol = Client()
+        self.user_not_follow = User.objects.create_user(
                 username="user_fol1", email="user_fol1@skynet.com", password="12345"
         )
-        self.client_fol1.force_login(self.user_follow1)
+        self.client_not_fol.force_login(self.user_not_follow)
         newpost = Post.objects.create(
             text="New test post", 
             author=self.user
             )
-        response = self.client_fol.get(reverse('follow_index'))
-        response1 = self.client_fol1.get(reverse('follow_index'))
-        self.assertNotContains(response, newpost.text)
-        self.assertNotContains(response1, newpost.text)
-        response_follow = self.client_fol.post(reverse('profile_follow', kwargs={'username':self.user.username}))
-        response = self.client_fol.get(reverse('follow_index'))
-        response1 = self.client_fol1.get(reverse('follow_index'))
-        self.assertContains(response, newpost.text)
-        self.assertNotContains(response1, newpost.text)
+        response_fol = self.client_fol.get(reverse('follow_index'))
+        response_notfol = self.client_not_fol.get(reverse('follow_index'))
+        self.assertNotContains(response_fol, newpost.text)
+        self.assertNotContains(response_notfol, newpost.text)
+        response_following = self.client_fol.post(reverse('profile_follow', kwargs={'username':self.user.username}))
+        response_fol = self.client_fol.get(reverse('follow_index'))
+        response_notfol = self.client_not_fol.get(reverse('follow_index'))
+        self.assertContains(response_fol, newpost.text)
+        self.assertNotContains(response_notfol, newpost.text)
 
 
         
