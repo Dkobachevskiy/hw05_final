@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from io import BytesIO
 from PIL import Image, ImageDraw
 from django.core.files.base import File
+from django.core.cache import cache
 
 
 User = get_user_model() 
@@ -54,6 +55,7 @@ class TestStringMethods(TestCase):
             author=self.user
             )
         newpost = self.post
+        cache.clear()
         self.url_list = (
             reverse('index'),
             reverse('profile', kwargs={"username": self.user.username}),
@@ -110,11 +112,12 @@ class TestStringMethods(TestCase):
             group = self.group,
             image = img,
         )
+        cache.clear()
         urls = [
             reverse('index'),
             reverse('profile', kwargs={"username": self.user.username}),
             reverse('post', kwargs={"username": self.user.username, "post_id": post.id,}),
-            reverse('group_posts', args={'slug': post.group.slug}),
+            reverse('group_posts', kwargs={'slug': post.group.slug}),
         ]
         for url in urls:
             with self.subTest(url=url):
