@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %} Записи {{ post_author.get_full_name }} {% endblock %}
+{% block header %} Записи {{ post_author.get_full_name }}{% endblock %}
+{% block content %}
+{% load user_filters %}
+ 
+    <main role="main" class="container">
+        <div class="row">
+            {% include "profile_item.html" %}
+
+                <div class="col-md-9">                
+
+
+                    <div class="card mb-3 mt-1 shadow-sm">
+                        <div class="card-body">
+                                <p class="card-text">
+                                        <a href="/{{ author.username }}/"><strong class="d-block text-gray-dark">@{{ author.username }}</strong></a>
+
+                                        {% for post in page %}
+
+                                        {% include "post_item.html" with post=post %}
+
+                                            {% if not forloop.last %}<hr>{% endif %}
+
+                                        {% endfor %}
+                                        
+                                        {% if page.has_other_pages %}
+                                        {% include "paginator.html" with items=page paginator=paginator %}
+                                        {% endif %}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                      
+                                        
+                                </div>
+                        </div>
+                    </div>
+                    
+                </div>
+        </div>
+    </main>    
+
+{% endblock %}
