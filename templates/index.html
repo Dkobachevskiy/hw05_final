@@ -8,10 +8,14 @@
 
            <h1> Последние обновления на сайте</h1>
 
+            {% load cache %}
+            {% cache 20 index_page %}
        
                 {% for post in page %}
                     {% include "post_item.html" with post=post %}
                 {% endfor %}
+
+            {% endcache %}
                 
     
 

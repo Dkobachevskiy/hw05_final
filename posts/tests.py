@@ -86,6 +86,7 @@ class TestStringMethods(TestCase):
             reverse('profile', kwargs={"username": self.user.username}),
             reverse('post', kwargs={"username": self.user.username, "post_id": post.id,})
         )
+        cache.clear()
         for url in self.url_list:
             with self.subTest(url=url):
                 response = self.client.get(url)
@@ -147,7 +148,21 @@ class TestStringMethods(TestCase):
             ),
         )
 
+    def test_cache(self):
+        response = self.client.get(reverse('index'))
+        self.post = Post.objects.create(
+            text="Its driving me crazy!", 
+            author=self.user,
+            group=self.group
+            )
+        response = self.client.get(reverse('index'))
+        self.assertNotContains(response, self.post.text)
+        cache.clear()
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, self.post.text)
 
-# не могу придумать ни логику тестов на кэш, ни логику последних тестов, или просто уже нету сил
+
+
+# не могу придумать логику последних тестов, или просто уже нету сил
 # поэтому, раз уж автотесты проходят, сдаю так, может вы мне подскажите с логикой
 # чтобы всё-таки успеть все сдать
