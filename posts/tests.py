@@ -50,11 +50,10 @@ class TestStringMethods(TestCase):
         self.assertEqual(Post.objects.count(), 0)
 
     def test_new_post(self):
-        self.post = Post.objects.create(
+        newpost = Post.objects.create(
             text="New test post", 
             author=self.user
             )
-        newpost = self.post
         cache.clear()
         self.url_list = (
             reverse('index'),
@@ -173,6 +172,36 @@ class TestStringMethods(TestCase):
         response = self.client_fol.post(reverse('profile_unfollow', kwargs={'username':self.user.username}))
         self.assertEqual(self.user.following.count(), 0)
 
+    def test_new_post_followers(self):
+        self.client_fol = Client()
+        self.user_follow = User.objects.create_user(
+                username="user_fol", email="user_fol@skynet.com", password="12345"
+        )
+        self.client_fol.force_login(self.user_follow)
+
+        self.client_fol1 = Client()
+        self.user_follow1 = User.objects.create_user(
+                username="user_fol1", email="user_fol1@skynet.com", password="12345"
+        )
+        self.client_fol1.force_login(self.user_follow1)
+        newpost = Post.objects.create(
+            text="New test post", 
+            author=self.user
+            )
+        response = self.client_fol.get(reverse('follow_index'))
+        response1 = self.client_fol1.get(reverse('follow_index'))
+        self.assertNotContains(response, newpost.text)
+        self.assertNotContains(response1, newpost.text)
+        response_follow = self.client_fol.post(reverse('profile_follow', kwargs={'username':self.user.username}))
+        response = self.client_fol.get(reverse('follow_index'))
+        response1 = self.client_fol1.get(reverse('follow_index'))
+        self.assertContains(response, newpost.text)
+        self.assertNotContains(response1, newpost.text)
+
+
+        
+
+        
 
 # не могу придумать логику последних тестов, или просто уже нету сил
 # поэтому, раз уж автотесты проходят, сдаю так, может вы мне подскажите с логикой
