@@ -161,6 +161,17 @@ class TestStringMethods(TestCase):
         response = self.client.get(reverse('index'))
         self.assertContains(response, self.post.text)
 
+    def test_folowing_auth_user(self):
+        self.client_fol = Client()
+        self.user_follow = User.objects.create_user(
+                username="user_fol", email="user_fol@skynet.com", password="12345"
+        )
+        self.client_fol.force_login(self.user_follow)
+        self.assertEqual(self.user.following.count(), 0)
+        response = self.client_fol.post(reverse('profile_follow', kwargs={'username':self.user.username}))
+        self.assertEqual(self.user.following.count(), 1)
+        response = self.client_fol.post(reverse('profile_unfollow', kwargs={'username':self.user.username}))
+        self.assertEqual(self.user.following.count(), 0)
 
 
 # не могу придумать логику последних тестов, или просто уже нету сил
