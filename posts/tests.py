@@ -192,17 +192,36 @@ class TestStringMethods(TestCase):
         response_notfol = self.client_not_fol.get(reverse('follow_index'))
         self.assertNotContains(response_fol, newpost.text)
         self.assertNotContains(response_notfol, newpost.text)
-        response_following = self.client_fol.post(reverse('profile_follow', kwargs={'username':self.user.username}))
+        response_following = self.client_fol.post(
+            reverse('profile_follow', kwargs={'username':self.user.username})
+        )
         response_fol = self.client_fol.get(reverse('follow_index'))
         response_notfol = self.client_not_fol.get(reverse('follow_index'))
         self.assertContains(response_fol, newpost.text)
         self.assertNotContains(response_notfol, newpost.text)
 
-
-        
-
-        
-
-# не могу придумать логику последних тестов, или просто уже нету сил
-# поэтому, раз уж автотесты проходят, сдаю так, может вы мне подскажите с логикой
-# чтобы всё-таки успеть все сдать
+    def test_auth_user_comment(self):
+        self.post = Post.objects.create(
+            text="Test post for comments", 
+            author=self.user,
+            )
+        post = Post.objects.get(author=self.user.id)
+        self.client_auth = Client()
+        self.user_auth = User.objects.create_user(
+                username="auth_user", email="auth_user@skynet.com", password="12345"
+        )
+        self.client_auth.force_login(self.user_auth)
+        self.client_not_auth = Client()
+        self.assertEqual(Comment.objects.count(),0)
+        self.client_auth.post(
+            reverse('add_comment', args=[post.author, post.id]),
+            {'text': 'new_comment'},
+            follow=True
+        )
+        self.assertEqual(Comment.objects.count(),1)
+        self.client_not_auth.post(
+            reverse('add_comment', args=[post.author, post.id]),
+            {'text': 'new_comment_not_auth'},
+            follow=True
+        )
+        self.assertEqual(Comment.objects.count(),1)
