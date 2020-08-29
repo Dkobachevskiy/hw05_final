@@ -109,14 +109,6 @@ def add_comment(request, username, post_id):
         comment.post = post 
         comment.author = request.user 
         comment.save()
-        #return redirect('post', username=username, post_id=post_id)
-    #context = {
-    #    'form': form,
-    #    'post_author': post_author,
-    #    'post': post,
-    #    'items': items,
-    #}
-    #return render(request, 'comments.html', context)
     return redirect('post', username=username, post_id=post_id)
 
 @login_required
