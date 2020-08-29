@@ -4,20 +4,20 @@
 {% block content %}
     <div class="container">
 
-        {% include "menu.html" with index=True %}
+        {% include "item/menu.html" with index=True %}
 
            <h1> Избранные авторы</h1>
 
             
 
                 {% for post in page %}
-                    {% include "post_item.html"%}
+                    {% include "item/post_item.html"%}
                 {% endfor %}
                 
     
 
         {% if page.has_other_pages %}
-            {% include "paginator.html" with items=page paginator=paginator%}
+            {% include "item/paginator.html" with items=page paginator=paginator%}
         {% endif %}
 
     </div>

@@ -6,7 +6,7 @@
  
     <main role="main" class="container">
         <div class="row">
-            {% include "profile_item.html" %}
+            {% include "item/profile_item.html" %}
 
                 <div class="col-md-9">                
 
@@ -18,14 +18,14 @@
 
                                         {% for post in page %}
 
-                                        {% include "post_item.html" with post=post %}
+                                        {% include "item/post_item.html" with post=post %}
 
                                             {% if not forloop.last %}<hr>{% endif %}
 
                                         {% endfor %}
                                         
                                         {% if page.has_other_pages %}
-                                        {% include "paginator.html" with items=page paginator=paginator %}
+                                        {% include "item/paginator.html" with items=page paginator=paginator %}
                                         {% endif %}
                                 </p>
                                 <div class="d-flex justify-content-between align-items-center">
