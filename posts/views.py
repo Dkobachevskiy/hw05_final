@@ -52,15 +52,11 @@ def profile(request, username):
     following = False
     if request.user.__class__.__name__ != 'AnonymousUser':
         following = Follow.objects.filter(author=author, user=request.user).exists()
-    followers_count = Follow.objects.filter(author=author).count
-    following_count = Follow.objects.filter(user=author).count
     context = {
         'page': page,
         'paginator': paginator,
         'author': author,
         'following': following,
-        'followers_count': followers_count,
-        'following_count': following_count,
         'author_posts': author_posts,
         }
     return render(request, 'profile.html', context)
@@ -105,8 +101,7 @@ def post_edit(request, username, post_id):
 
 @login_required
 def add_comment(request, username, post_id):
-    post = get_object_or_404(Post, author__username=username,
-                             id=post_id)
+    post = get_object_or_404(Post, author__username=username, pk=post_id)
     form = CommentForm(request.POST or None)
     items = post.comments.all()
     if form.is_valid():
@@ -114,15 +109,15 @@ def add_comment(request, username, post_id):
         comment.post = post 
         comment.author = request.user 
         comment.save()
-        return redirect('post', username=username, post_id=post_id)
-    context = {
-        'form': form,
-        'post_author': post_author,
-        'post': post,
-        'form': CommentForm(),
-        'items': items,
-    }
-    return render(request, 'comments.html', context)
+        #return redirect('post', username=username, post_id=post_id)
+    #context = {
+    #    'form': form,
+    #    'post_author': post_author,
+    #    'post': post,
+    #    'items': items,
+    #}
+    #return render(request, 'comments.html', context)
+    return redirect('post', username=username, post_id=post_id)
 
 @login_required
 def follow_index(request):
@@ -147,8 +142,7 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     unfollow_profile = Follow.objects.get(author__username=username, user=request.user)
-    if Follow.objects.filter(pk=unfollow_profile.pk).exists():
-        unfollow_profile.delete()
+    unfollow_profile.delete()
     return redirect('profile', username=username)
 
 

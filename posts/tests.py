@@ -17,16 +17,25 @@ class TestStringMethods(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.client1 = Client()
+        self.client_auth = Client()
+        self.client_auth_fol = Client()
+        self.client_not_auth = Client()
         self.user = User.objects.create_user(
                 username="sarah", email="connor@skynet.com", password="12345"
+        )
+        self.user_auth = User.objects.create_user(
+                username="user_auth", email="user_auth@skynet.com", password="12345"
+        )
+        self.user_auth_fol = User.objects.create_user(
+                username="user_auth_fol", email="user_auth_fol@skynet.com", password="12345"
         )
         self.group = Group.objects.create(
             title="terminator", 
             slug="film",
             description="1984, science fiction, action"
             )
-        self.client.force_login(self.user)     
+        self.client.force_login(self.user)
+        cache.clear()   
 
     def test_profile(self):
         response = self.client.get(reverse('profile', kwargs={"username": self.user.username}))
@@ -35,17 +44,19 @@ class TestStringMethods(TestCase):
     def test_create_post(self):
         response = self.client.get(reverse('profile', kwargs={"username": self.user.username}))
         self.assertEqual(len(response.context["page"]), 0)
-        response_create = self.client.post(reverse('new_post'), {"text":"new post", "group": self.group.id}, follow=True)
+        response_create = self.client.post(
+            reverse('new_post'), {"text":"new post", "group": self.group.id}, follow=True
+        )
         self.assertRedirects(response_create, reverse('index'))
-        response1 = self.client.get(reverse('profile', kwargs={"username": self.user.username}))
-        self.assertEqual(len(response1.context["page"]), 1)
+        response_prof = self.client.get(reverse('profile', kwargs={"username": self.user.username}))
+        self.assertEqual(len(response_prof.context["page"]), 1)
         self.post = Post.objects.get(id=1)
         self.assertEqual(self.post.text, "new post")
         self.assertEqual(self.post.author, self.user)
         self.assertEqual(self.post.group, self.group)
         
     def test_guest(self):
-        response_new = self.client1.get(reverse('new_post'), follow=True)
+        response_new = self.client_not_auth.get(reverse('new_post'), follow=True)
         self.assertRedirects(response_new, f"{reverse('login')}?next={reverse('new_post')}")
         self.assertEqual(Post.objects.count(), 0)
 
@@ -54,7 +65,6 @@ class TestStringMethods(TestCase):
             text="New test post", 
             author=self.user
             )
-        cache.clear()
         self.url_list = (
             reverse('index'),
             reverse('profile', kwargs={"username": self.user.username}),
@@ -85,7 +95,6 @@ class TestStringMethods(TestCase):
             reverse('profile', kwargs={"username": self.user.username}),
             reverse('post', kwargs={"username": self.user.username, "post_id": post.id,})
         )
-        cache.clear()
         for url in self.url_list:
             with self.subTest(url=url):
                 response = self.client.get(url)
@@ -148,57 +157,39 @@ class TestStringMethods(TestCase):
         )
 
     def test_cache(self):
+        self.assertEqual(Post.objects.count(),0)
         response = self.client.get(reverse('index'))
         self.post = Post.objects.create(
             text="Its driving me crazy!", 
             author=self.user,
             group=self.group
             )
-        response = self.client.get(reverse('index'))
-        self.assertNotContains(response, self.post.text)
-        cache.clear()
-        response = self.client.get(reverse('index'))
-        self.assertContains(response, self.post.text)
+        self.assertEqual(Post.objects.count(),1)
+        response_new = self.client.get(reverse('index'))
+        self.assertEqual(response.content, response_new.content)
 
     def test_folowing_auth_user(self):
-        self.client_fol = Client()
-        self.user_follow = User.objects.create_user(
-                username="user_fol", email="user_fol@skynet.com", password="12345"
-        )
-        self.client_fol.force_login(self.user_follow)
+        self.client_auth.force_login(self.user_auth)
         self.assertEqual(self.user.following.count(), 0)
-        response = self.client_fol.post(reverse('profile_follow', kwargs={'username':self.user.username}))
+        response = self.client_auth.post(reverse('profile_follow', kwargs={'username':self.user.username}))
         self.assertEqual(self.user.following.count(), 1)
-        response = self.client_fol.post(reverse('profile_unfollow', kwargs={'username':self.user.username}))
+        response = self.client_auth.post(reverse('profile_unfollow', kwargs={'username':self.user.username}))
         self.assertEqual(self.user.following.count(), 0)
 
-    def test_new_post_followers(self):
-        self.client_fol = Client()
-        self.user_follow = User.objects.create_user(
-                username="user_fol", email="user_fol@skynet.com", password="12345"
+    def test_new_post_followers(self):        
+        self.client_auth.force_login(self.user_auth)
+        self.client_auth_fol.force_login(self.user_auth_fol)
+        response_following = self.client_auth_fol.post(
+            reverse('profile_follow', kwargs={'username':self.user.username})
         )
-        self.client_fol.force_login(self.user_follow)
-
-        self.client_not_fol = Client()
-        self.user_not_follow = User.objects.create_user(
-                username="user_fol1", email="user_fol1@skynet.com", password="12345"
-        )
-        self.client_not_fol.force_login(self.user_not_follow)
         newpost = Post.objects.create(
             text="New test post", 
             author=self.user
             )
-        response_fol = self.client_fol.get(reverse('follow_index'))
-        response_notfol = self.client_not_fol.get(reverse('follow_index'))
-        self.assertNotContains(response_fol, newpost.text)
-        self.assertNotContains(response_notfol, newpost.text)
-        response_following = self.client_fol.post(
-            reverse('profile_follow', kwargs={'username':self.user.username})
-        )
-        response_fol = self.client_fol.get(reverse('follow_index'))
-        response_notfol = self.client_not_fol.get(reverse('follow_index'))
-        self.assertContains(response_fol, newpost.text)
-        self.assertNotContains(response_notfol, newpost.text)
+        response_auth = self.client_auth.get(reverse('follow_index'))
+        response_auth_fol = self.client_auth_fol.get(reverse('follow_index'))
+        self.assertNotContains(response_auth, newpost.text)
+        self.assertContains(response_auth_fol, newpost.text)
 
     def test_auth_user_comment(self):
         self.post = Post.objects.create(
@@ -206,10 +197,6 @@ class TestStringMethods(TestCase):
             author=self.user,
             )
         post = Post.objects.get(author=self.user.id)
-        self.client_auth = Client()
-        self.user_auth = User.objects.create_user(
-                username="auth_user", email="auth_user@skynet.com", password="12345"
-        )
         self.client_auth.force_login(self.user_auth)
         self.client_not_auth = Client()
         self.assertEqual(Comment.objects.count(),0)

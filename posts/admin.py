@@ -12,7 +12,7 @@ class GroupAdmin(admin.ModelAdmin):
     list_display = ("pk", "title", "slug", "description")
     search_field = ("title",)
     empty_value_display = "-пусто-"
-# при регистрации модели Post источником конфигурации для неё назначаем класс PostAdmin
+
 class CommentAdmin(admin.ModelAdmin):  
     list_display = ('post', 'text', 'author', 'created')
     
