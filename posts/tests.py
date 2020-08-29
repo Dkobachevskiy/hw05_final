@@ -16,6 +16,7 @@ User = get_user_model()
 class TestStringMethods(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.client = Client()
         self.client_auth = Client()
         self.client_auth_fol = Client()
@@ -34,8 +35,7 @@ class TestStringMethods(TestCase):
             slug="film",
             description="1984, science fiction, action"
             )
-        self.client.force_login(self.user)
-        cache.clear()   
+        self.client.force_login(self.user) 
 
     def test_profile(self):
         response = self.client.get(reverse('profile', kwargs={"username": self.user.username}))
@@ -121,7 +121,6 @@ class TestStringMethods(TestCase):
             group = self.group,
             image = img,
         )
-        cache.clear()
         urls = [
             reverse('index'),
             reverse('profile', kwargs={"username": self.user.username}),

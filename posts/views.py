@@ -103,7 +103,6 @@ def post_edit(request, username, post_id):
 def add_comment(request, username, post_id):
     post = get_object_or_404(Post, author__username=username, pk=post_id)
     form = CommentForm(request.POST or None)
-    items = post.comments.all()
     if form.is_valid():
         comment = form.save(commit=False) 
         comment.post = post 
