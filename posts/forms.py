@@ -10,7 +10,11 @@ class PostForm(ModelForm):
             'group',
             'image',
         ]
-        labels = {'text': 'Текст поста'}
+        labels = {
+            'text': 'Текст поста',
+            'group': 'Группа',
+            'image': 'Картинка',
+        }
  
 form = PostForm()
 

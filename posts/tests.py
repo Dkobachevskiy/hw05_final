@@ -1,13 +1,12 @@
-from django.test import TestCase
-from django.test import Client
-from .models import Post, Group, Comment
+from .models import Post, Group, Comment, Follow
 from django.contrib.auth import get_user_model 
-from django.urls import reverse
+from django.core.cache import cache
+from django.core.files.base import File
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, Client
+from django.urls import reverse
 from io import BytesIO
 from PIL import Image, ImageDraw
-from django.core.files.base import File
-from django.core.cache import cache
 
 
 User = get_user_model() 
@@ -172,23 +171,32 @@ class TestStringMethods(TestCase):
         self.assertEqual(self.user.following.count(), 0)
         response = self.client_auth.post(reverse('profile_follow', kwargs={'username':self.user.username}))
         self.assertEqual(self.user.following.count(), 1)
+
+    def test_unfollowing_auth_user(self):
+        self.client_auth.force_login(self.user_auth)
+        folowing = Follow.objects.create(user=self.user_auth, author=self.user)
+        self.assertEqual(self.user.following.count(), 1)
         response = self.client_auth.post(reverse('profile_unfollow', kwargs={'username':self.user.username}))
         self.assertEqual(self.user.following.count(), 0)
 
     def test_new_post_followers(self):        
-        self.client_auth.force_login(self.user_auth)
         self.client_auth_fol.force_login(self.user_auth_fol)
-        response_following = self.client_auth_fol.post(
-            reverse('profile_follow', kwargs={'username':self.user.username})
-        )
+        folowing = Follow.objects.create(user=self.user_auth_fol, author=self.user)
+        newpost = Post.objects.create(
+            text="New test post", 
+            author=self.user
+            )
+        response_auth_fol = self.client_auth_fol.get(reverse('follow_index'))
+        self.assertContains(response_auth_fol, newpost.text)
+
+    def test_new_post_notfollowers(self):
+        self.client_auth.force_login(self.user_auth)
         newpost = Post.objects.create(
             text="New test post", 
             author=self.user
             )
         response_auth = self.client_auth.get(reverse('follow_index'))
-        response_auth_fol = self.client_auth_fol.get(reverse('follow_index'))
         self.assertNotContains(response_auth, newpost.text)
-        self.assertContains(response_auth_fol, newpost.text)
 
     def test_auth_user_comment(self):
         self.post = Post.objects.create(
@@ -197,7 +205,6 @@ class TestStringMethods(TestCase):
             )
         post = Post.objects.get(author=self.user.id)
         self.client_auth.force_login(self.user_auth)
-        self.client_not_auth = Client()
         self.assertEqual(Comment.objects.count(),0)
         self.client_auth.post(
             reverse('add_comment', args=[post.author, post.id]),
@@ -205,9 +212,17 @@ class TestStringMethods(TestCase):
             follow=True
         )
         self.assertEqual(Comment.objects.count(),1)
+        
+    def test_notauth_user_comment(self):
+        self.post = Post.objects.create(
+            text="Test post for comments", 
+            author=self.user,
+            )
+        post = Post.objects.get(author=self.user.id)
+        self.assertEqual(Comment.objects.count(),0)
         self.client_not_auth.post(
             reverse('add_comment', args=[post.author, post.id]),
             {'text': 'new_comment_not_auth'},
             follow=True
         )
-        self.assertEqual(Comment.objects.count(),1)
+        self.assertEqual(Comment.objects.count(),0)
