@@ -130,6 +130,7 @@ class TestStringMethods(TestCase):
             with self.subTest(url=url):
                 response = self.client.get(url)
                 self.assertContains(response, '<img')
+        post.image.delete()
 
     def test_without_picture(self):
         not_image = SimpleUploadedFile(
